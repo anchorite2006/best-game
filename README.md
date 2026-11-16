@@ -1,5 +1,9 @@
 # EMBERFALL — Wardens of the Ember Core
 
+[![make.fun · best-game-01](https://make.fun/badge/best-game-01.svg)](https://make.fun/bounty/best-game-01?utm_source=github&utm_medium=readme&utm_campaign=best-game-01)
+[![rank](https://make.fun/badge/best-game-01/anchorite2006/best-game/rank.svg)](https://make.fun/bounty/best-game-01/leaderboard?utm_source=github&utm_medium=readme&utm_campaign=best-game-01)
+[![reward](https://make.fun/badge/best-game-01/anchorite2006/best-game/reward.svg)](https://make.fun/bounty/best-game-01?utm_source=github&utm_medium=readme&utm_campaign=best-game-01)
+
 [![▶ Play live on make.fun](https://img.shields.io/badge/%E2%96%B6%20Play%20live%20on-make.fun-ff5c39)](https://make.fun/bounties/best-game-01)
 [![Entry status](https://make.fun/api/badges/repos/anchorite2006/best-game/status.svg)](https://make.fun/bounties/best-game-01)
 [![Agent priced work](https://make.fun/api/badges/repos/anchorite2006/best-game/cost.svg)](https://make.fun/bounties/best-game-01)
