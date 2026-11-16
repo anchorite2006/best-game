@@ -1,4 +1,4 @@
-// The staged screenshot scenes behind ?shot=start|play|late|end&seed=N. Each scene
+// The staged screenshot scenes behind ?shot=start|cover|play|late|end&seed=N. Each scene
 // runs the real simulation forward from a fixed seed — the play scenes with an
 // autopilot at the controls, the end scene with a pilot who stops dodging — then
 // freezes on one frame and sets window.__shotReady so a screenshot tool can grab
@@ -92,12 +92,46 @@ function passiveInput(game) {
 // in the thick of it rather than parked against an edge.
 function frameIsLively(game, minEnemies) {
   const p = game.player;
-  const margin = 130;
+  const margin = 120;
   return (
     game.enemies.length >= minEnemies
     && game.bullets.length >= 2
     && p.x > margin && p.x < VIEW.width - margin
     && p.y > margin && p.y < VIEW.height - margin
+  );
+}
+
+function hasLiveParticles(game, min) {
+  return game.effects.particles.length >= min;
+}
+
+function wellInside(enemy, inset) {
+  return enemy.x > inset && enemy.x < VIEW.width - inset && enemy.y > inset && enemy.y < VIEW.height - inset;
+}
+
+function coverIsReady(game) {
+  const insideCount = game.enemies.filter((e) => wellInside(e, 50)).length;
+  return (
+    game.waves.wave >= 7
+    && frameIsLively(game, 12)
+    && insideCount >= 9
+    && hasLiveParticles(game, 6)
+    && (game.overdrive.active || game.pickups.length > 0 || game.overdrive.charge >= 40)
+  );
+}
+
+function playIsReady(game) {
+  return frameIsLively(game, 8) && hasLiveParticles(game, 4);
+}
+
+function lateIsReady(game) {
+  const bulwarkVisible = game.enemies.some((e) => e.kind === 'bulwark' && wellInside(e, 50));
+  const weaverVisible = game.enemies.some((e) => e.kind === 'weaver' && wellInside(e, 50));
+  return (
+    game.waves.wave >= 5
+    && frameIsLively(game, 7)
+    && bulwarkVisible
+    && weaverVisible
   );
 }
 
@@ -118,14 +152,20 @@ export function stageShot(name, seed, ctx, sound, rng) {
     drawMenu(ctx, game, 0, 3.0);
     return;
   }
+  if (name === 'cover') {
+    flyWith(game, autopilotInput, 60 * 60, 60 * 300, coverIsReady);
+    drawScene(ctx, game);
+    drawHUD(ctx, game);
+    return;
+  }
   if (name === 'play') {
-    flyWith(game, autopilotInput, 60 * 8, 60 * 60, (g) => frameIsLively(g, 4));
+    flyWith(game, autopilotInput, 60 * 8, 60 * 90, playIsReady);
     drawScene(ctx, game);
     drawHUD(ctx, game);
     return;
   }
   if (name === 'late') {
-    flyWith(game, autopilotInput, 60 * 30, 60 * 110, (g) => g.waves.wave >= 4 && frameIsLively(g, 6));
+    flyWith(game, autopilotInput, 60 * 30, 60 * 180, lateIsReady);
     drawScene(ctx, game);
     drawHUD(ctx, game);
     return;

@@ -32,10 +32,24 @@ export function drawScene(ctx, game, options = {}) {
 function drawPlayer(ctx, game) {
   const p = game.player;
   const blink = p.invulnerable > 0 && Math.floor(game.time * 14) % 2 === 0;
+  // Soft halo so the warden pops against the nebula even at a glance.
+  ctx.save();
+  ctx.globalAlpha = blink ? 0.12 : 0.28;
+  const halo = ctx.createRadialGradient(p.x, p.y, 2, p.x, p.y, p.radius * 2.6);
+  halo.addColorStop(0, COLORS.player);
+  halo.addColorStop(1, 'rgba(87, 247, 255, 0)');
+  ctx.fillStyle = halo;
+  ctx.beginPath();
+  ctx.arc(p.x, p.y, p.radius * 2.6, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
   ctx.save();
   ctx.translate(p.x, p.y);
   ctx.rotate(p.angle);
+  ctx.scale(p.radius / 13, p.radius / 13);
   ctx.globalAlpha = blink ? 0.35 : 1;
+  ctx.shadowColor = COLORS.player;
+  ctx.shadowBlur = 14;
   // Engine flame, flickering with time and stronger while dashing.
   const moving = Math.hypot(p.vx, p.vy) > 30;
   if (moving) {
@@ -65,16 +79,18 @@ function drawPlayer(ctx, game) {
   ctx.fill();
   ctx.fillStyle = COLORS.playerCore;
   ctx.beginPath();
-  ctx.arc(4, 0, 3.4, 0, Math.PI * 2);
+  ctx.arc(4, 0, 4.4, 0, Math.PI * 2);
   ctx.fill();
   ctx.restore();
   if (p.shielded) {
     ctx.save();
     ctx.globalAlpha = 0.55 + 0.2 * Math.sin(game.time * 5);
     ctx.strokeStyle = COLORS.plasma;
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 2.5;
+    ctx.shadowColor = COLORS.plasma;
+    ctx.shadowBlur = 10;
     ctx.beginPath();
-    ctx.arc(p.x, p.y, p.radius + 9, 0, Math.PI * 2);
+    ctx.arc(p.x, p.y, p.radius + 12, 0, Math.PI * 2);
     ctx.stroke();
     ctx.restore();
   }
@@ -83,26 +99,35 @@ function drawPlayer(ctx, game) {
 function drawBullets(ctx, bullets) {
   ctx.save();
   ctx.strokeStyle = COLORS.bullet;
-  ctx.lineWidth = 3;
+  ctx.lineWidth = 4.5;
   ctx.lineCap = 'round';
   ctx.shadowColor = COLORS.player;
-  ctx.shadowBlur = 6;
+  ctx.shadowBlur = 12;
   ctx.beginPath();
   for (const b of bullets) {
-    const back = 0.018;
+    const back = 0.024;
     ctx.moveTo(b.x - b.vx * back, b.y - b.vy * back);
     ctx.lineTo(b.x, b.y);
   }
   ctx.stroke();
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = COLORS.playerCore;
+  for (const b of bullets) {
+    ctx.beginPath();
+    ctx.arc(b.x, b.y, b.r * 0.9, 0, Math.PI * 2);
+    ctx.fill();
+  }
   ctx.restore();
 }
 
 function drawPlasma(ctx, orb, time) {
   const pulse = 1 + 0.18 * Math.sin(time * 10 + orb.x);
   ctx.save();
-  ctx.fillStyle = 'rgba(125, 255, 206, 0.25)';
+  ctx.shadowColor = COLORS.plasma;
+  ctx.shadowBlur = 14;
+  ctx.fillStyle = 'rgba(125, 255, 206, 0.28)';
   ctx.beginPath();
-  ctx.arc(orb.x, orb.y, orb.r * 2 * pulse, 0, Math.PI * 2);
+  ctx.arc(orb.x, orb.y, orb.r * 2.1 * pulse, 0, Math.PI * 2);
   ctx.fill();
   ctx.fillStyle = COLORS.plasma;
   ctx.beginPath();
@@ -111,10 +136,25 @@ function drawPlasma(ctx, orb, time) {
   ctx.restore();
 }
 
+const ENEMY_BASE_RADIUS = { drifter: 15, darter: 11, bulwark: 30, weaver: 16 };
+
 function drawEnemy(ctx, enemy) {
   const color = COLORS[enemy.kind];
+  // Halo first (unrotated, under the hull) so every kind reads at still size.
+  ctx.save();
+  ctx.globalAlpha = enemy.warp > 0 ? 0.1 : 0.26;
+  const halo = ctx.createRadialGradient(enemy.x, enemy.y, 2, enemy.x, enemy.y, enemy.radius * 2.1);
+  halo.addColorStop(0, color);
+  halo.addColorStop(1, 'rgba(0, 0, 0, 0)');
+  ctx.fillStyle = halo;
+  ctx.beginPath();
+  ctx.arc(enemy.x, enemy.y, enemy.radius * 2.1, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
   ctx.save();
   ctx.translate(enemy.x, enemy.y);
+  ctx.shadowColor = color;
+  ctx.shadowBlur = 12;
   if (enemy.warp > 0) {
     const k = 1 - enemy.warp / 0.55;
     ctx.globalAlpha = 0.25 + 0.75 * k;
@@ -126,6 +166,8 @@ function drawEnemy(ctx, enemy) {
     ctx.stroke();
   }
   ctx.rotate(enemy.rot);
+  const shapeScale = enemy.radius / (ENEMY_BASE_RADIUS[enemy.kind] || enemy.radius);
+  ctx.scale(shapeScale, shapeScale);
   ctx.fillStyle = color;
   if (enemy.kind === 'drifter') {
     ctx.beginPath();
@@ -146,15 +188,15 @@ function drawEnemy(ctx, enemy) {
     ctx.closePath();
     ctx.fill();
   } else if (enemy.kind === 'bulwark') {
-    polygon(ctx, 0, 0, enemy.radius, 6);
+    polygon(ctx, 0, 0, ENEMY_BASE_RADIUS.bulwark, 6);
     ctx.fill();
     ctx.rotate(-enemy.rot * 1.7);
     ctx.fillStyle = 'rgba(10, 8, 30, 0.55)';
-    polygon(ctx, 0, 0, enemy.radius * 0.58, 6);
+    polygon(ctx, 0, 0, ENEMY_BASE_RADIUS.bulwark * 0.58, 6);
     ctx.fill();
     ctx.fillStyle = color;
     ctx.beginPath();
-    ctx.arc(0, 0, 5, 0, Math.PI * 2);
+    ctx.arc(0, 0, 6.5, 0, Math.PI * 2);
     ctx.fill();
   } else if (enemy.kind === 'weaver') {
     ctx.beginPath();
@@ -173,13 +215,13 @@ function drawEnemy(ctx, enemy) {
     ctx.globalAlpha = Math.min(1, enemy.flash * 9);
     ctx.fillStyle = '#ffffff';
     ctx.beginPath();
-    ctx.arc(0, 0, enemy.radius * 0.85, 0, Math.PI * 2);
+    ctx.arc(0, 0, (ENEMY_BASE_RADIUS[enemy.kind] || enemy.radius) * 0.85, 0, Math.PI * 2);
     ctx.fill();
     ctx.globalAlpha = 1;
   }
   ctx.restore();
   if (enemy.kind === 'bulwark' && enemy.hp < enemy.maxHp && enemy.warp <= 0) {
-    const w = 52;
+    const w = 68;
     ctx.fillStyle = 'rgba(0,0,0,0.5)';
     ctx.fillRect(enemy.x - w / 2, enemy.y - enemy.radius - 14, w, 5);
     ctx.fillStyle = COLORS.bulwark;
@@ -206,12 +248,12 @@ function drawPickup(ctx, pickup, time) {
     ctx.rotate(time * 2.4);
     ctx.fillStyle = COLORS.shard;
     ctx.shadowColor = COLORS.shard;
-    ctx.shadowBlur = 10;
+    ctx.shadowBlur = 12;
     ctx.beginPath();
-    ctx.moveTo(0, -8);
-    ctx.lineTo(5.5, 0);
-    ctx.lineTo(0, 8);
-    ctx.lineTo(-5.5, 0);
+    ctx.moveTo(0, -10.5);
+    ctx.lineTo(7, 0);
+    ctx.lineTo(0, 10.5);
+    ctx.lineTo(-7, 0);
     ctx.closePath();
     ctx.fill();
   } else {
@@ -220,13 +262,13 @@ function drawPickup(ctx, pickup, time) {
     ctx.strokeStyle = style.color;
     ctx.lineWidth = 2;
     ctx.shadowColor = style.color;
-    ctx.shadowBlur = 8;
+    ctx.shadowBlur = 10;
     ctx.beginPath();
-    ctx.roundRect(-13, -13, 26, 26, 7);
+    ctx.roundRect(-15, -15, 30, 30, 8);
     ctx.fill();
     ctx.stroke();
     ctx.shadowBlur = 0;
-    text(ctx, style.label, 0, 1, 16, style.color);
+    text(ctx, style.label, 0, 1, 18, style.color);
   }
   ctx.restore();
 }
@@ -253,15 +295,15 @@ export function drawHUD(ctx, game) {
   text(ctx, left > 0 ? `${left} HOSTILE${left === 1 ? '' : 'S'}` : 'SECTOR CLEAR', VIEW.width / 2, 56, 13, COLORS.hudDim);
   // Hull (lives) and overdrive, top-right.
   for (let i = 0; i < game.player.lives; i += 1) {
-    const x = VIEW.width - pad - 16 - i * 26;
+    const x = VIEW.width - pad - 16 - i * 30;
     ctx.save();
     ctx.translate(x, 26);
     ctx.fillStyle = COLORS.player;
     ctx.beginPath();
-    ctx.moveTo(9, 0);
-    ctx.lineTo(-7, -7);
-    ctx.lineTo(-4, 0);
-    ctx.lineTo(-7, 7);
+    ctx.moveTo(11, 0);
+    ctx.lineTo(-8, -8);
+    ctx.lineTo(-5, 0);
+    ctx.lineTo(-8, 8);
     ctx.closePath();
     ctx.fill();
     ctx.restore();

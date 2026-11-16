@@ -6,8 +6,9 @@ export const VIEW = { width: 1280, height: 720 };
 export const COLORS = {
   spaceTop: '#070b1d',
   spaceBottom: '#0d1030',
-  nebulaA: 'rgba(64, 42, 128, 0.20)',
-  nebulaB: 'rgba(14, 92, 110, 0.16)',
+  nebulaA: 'rgba(64, 42, 128, 0.24)',
+  nebulaB: 'rgba(14, 92, 110, 0.19)',
+  nebulaC: 'rgba(112, 44, 138, 0.17)',
   player: '#57f7ff',
   playerCore: '#eaffff',
   bullet: '#aefcff',
@@ -24,14 +25,14 @@ export const COLORS = {
 };
 
 export const PLAYER = {
-  radius: 13,
+  radius: 18,
   speed: 335,
   dashSpeed: 980,
   dashTime: 0.16,
   dashCooldown: 1.6,
   fireInterval: 0.16,
   bulletSpeed: 760,
-  bulletRadius: 4,
+  bulletRadius: 5,
   startLives: 3,
   maxLives: 5,
   invulnerableTime: 2.0,
@@ -55,13 +56,13 @@ export const OVERDRIVE = {
 export const COMBO = { window: 2.5, maxMultiplier: 5 };
 
 export const ENEMIES = {
-  drifter: { radius: 15, hp: 2, speed: 96, score: 50, contact: 1 },
-  darter: { radius: 11, hp: 1, speed: 218, score: 80, contact: 1 },
-  bulwark: { radius: 30, hp: 11, speed: 42, score: 250, contact: 1 },
-  weaver: { radius: 16, hp: 4, speed: 120, score: 150, contact: 1 },
+  drifter: { radius: 21, hp: 2, speed: 96, score: 50, contact: 1 },
+  darter: { radius: 16, hp: 1, speed: 218, score: 80, contact: 1 },
+  bulwark: { radius: 40, hp: 11, speed: 42, score: 250, contact: 1 },
+  weaver: { radius: 22, hp: 4, speed: 120, score: 150, contact: 1 },
 };
 
-export const PLASMA = { radius: 6, speed: 205, life: 4.5 };
+export const PLASMA = { radius: 8, speed: 205, life: 4.5 };
 
 export const DROPS = {
   shardChance: 0.55,

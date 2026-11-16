@@ -15,5 +15,7 @@ Then open http://localhost:8080/game/ in a desktop browser. WASD or the arrow ke
 Zero network requests: every sound is synthesized with WebAudio and every sprite is drawn in code. Open `game/index.html` straight from disk, or serve the folder with any static file server.
 
 Screenshots are the game's own staged scenes, reproducible with
-`?shot=start|play|late|end&seed=7` — see `shots.json` for the exact query
+`?shot=start|cover|play|late|end&seed=N` — see `shots.json` for the exact query
 behind each file in `screenshots/`.
+
+A later visual pass scaled every ship and swarm sprite up by roughly 1.4x, added soft glow halos so shapes pop in stills, and replaced the flat nebula blobs with layered radial-gradient clouds over a denser starfield. The submitted cover is now a staged wave-7 action frame (seed 3) instead of the menu, so the sheet leads with the swarm at full density.

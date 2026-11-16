@@ -2,7 +2,7 @@
 // score text and screen shake. Every hit, kill and pickup in the game speaks through
 // this module, which is what makes the action read as juicy rather than silent.
 
-import { VIEW } from './config.js';
+import { VIEW, COLORS } from './config.js';
 
 export class Effects {
   constructor(rng) {
@@ -12,9 +12,10 @@ export class Effects {
     this.shake = 0;
     this.stars = [];
     const layers = [
-      { count: 70, speed: 6, size: 1, alpha: 0.5 },
-      { count: 46, speed: 14, size: 1.6, alpha: 0.75 },
-      { count: 22, speed: 26, size: 2.4, alpha: 1 },
+      { count: 120, speed: 6, size: 1, alpha: 0.5 },
+      { count: 84, speed: 14, size: 1.6, alpha: 0.75 },
+      { count: 40, speed: 26, size: 2.4, alpha: 1 },
+      { count: 10, speed: 18, size: 3.4, alpha: 1 },
     ];
     for (const layer of layers) {
       for (let i = 0; i < layer.count; i += 1) {
@@ -22,9 +23,10 @@ export class Effects {
           x: rng.range(0, VIEW.width),
           y: rng.range(0, VIEW.height),
           speed: layer.speed,
-          size: layer.size,
-          alpha: layer.alpha,
+          size: layer.size * rng.range(0.7, 1.35),
+          alpha: layer.alpha * rng.range(0.7, 1),
           twinkle: rng.range(0, Math.PI * 2),
+          bright: layer.size >= 3,
         });
       }
     }
@@ -105,25 +107,60 @@ export class Effects {
 
   drawBackground(ctx) {
     const grad = ctx.createLinearGradient(0, 0, 0, VIEW.height);
-    grad.addColorStop(0, '#070b1d');
-    grad.addColorStop(1, '#0d1030');
+    grad.addColorStop(0, COLORS.spaceTop);
+    grad.addColorStop(1, COLORS.spaceBottom);
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, VIEW.width, VIEW.height);
-    ctx.fillStyle = 'rgba(64, 42, 128, 0.20)';
+    // Layered radial nebula clouds: large soft washes first, then smaller
+    // brighter cores, all in the palette so sprites still sit on top.
+    const clouds = [
+      { x: 280, y: 140, r: 420, color: COLORS.nebulaA },
+      { x: 1040, y: 560, r: 470, color: COLORS.nebulaA },
+      { x: 900, y: 120, r: 330, color: COLORS.nebulaB },
+      { x: 170, y: 610, r: 360, color: COLORS.nebulaB },
+      { x: 640, y: 380, r: 520, color: COLORS.nebulaC },
+      { x: 430, y: 300, r: 190, color: 'rgba(86, 64, 180, 0.16)' },
+      { x: 980, y: 300, r: 170, color: 'rgba(20, 140, 160, 0.14)' },
+      { x: 180, y: 380, r: 150, color: 'rgba(112, 44, 138, 0.12)' },
+    ];
+    for (const cloud of clouds) {
+      const rg = ctx.createRadialGradient(cloud.x, cloud.y, 0, cloud.x, cloud.y, cloud.r);
+      rg.addColorStop(0, cloud.color);
+      rg.addColorStop(0.55, cloud.color.replace(/[\d.]+\)$/, '0.05)'));
+      rg.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = rg;
+      ctx.fillRect(cloud.x - cloud.r, cloud.y - cloud.r, cloud.r * 2, cloud.r * 2);
+    }
+    // Faint distant dust band for depth across the middle: a squashed radial
+    // gradient, so it fades out with no hard ellipse edge.
+    ctx.save();
+    ctx.translate(640, 360);
+    ctx.rotate(-0.18);
+    ctx.scale(1, 0.22);
+    const dust = ctx.createRadialGradient(0, 0, 0, 0, 0, 700);
+    dust.addColorStop(0, 'rgba(143, 184, 255, 0.055)');
+    dust.addColorStop(0.7, 'rgba(143, 184, 255, 0.025)');
+    dust.addColorStop(1, 'rgba(143, 184, 255, 0)');
+    ctx.fillStyle = dust;
     ctx.beginPath();
-    ctx.ellipse(300, 150, 340, 150, 0.4, 0, Math.PI * 2);
-    ctx.ellipse(1020, 560, 380, 170, -0.3, 0, Math.PI * 2);
+    ctx.arc(0, 0, 700, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = 'rgba(14, 92, 110, 0.16)';
-    ctx.beginPath();
-    ctx.ellipse(880, 130, 260, 110, 0.2, 0, Math.PI * 2);
-    ctx.ellipse(180, 600, 300, 130, 0, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.restore();
     for (const star of this.stars) {
       const tw = 0.7 + 0.3 * Math.sin(star.twinkle);
       ctx.globalAlpha = star.alpha * tw;
-      ctx.fillStyle = '#cfe9ff';
+      ctx.fillStyle = star.bright ? '#ffffff' : '#cfe9ff';
+      if (star.bright) {
+        ctx.shadowColor = '#cfe9ff';
+        ctx.shadowBlur = 8;
+      }
       ctx.fillRect(star.x, star.y, star.size, star.size);
+      ctx.shadowBlur = 0;
+      if (star.bright) {
+        ctx.globalAlpha = star.alpha * tw * 0.55;
+        ctx.fillRect(star.x - star.size * 1.6, star.y + star.size * 0.35, star.size * 4.2, 1);
+        ctx.fillRect(star.x + star.size * 0.35, star.y - star.size * 1.6, 1, star.size * 4.2);
+      }
     }
     ctx.globalAlpha = 1;
   }
