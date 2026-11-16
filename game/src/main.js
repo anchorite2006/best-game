@@ -2,7 +2,7 @@
 // and the page-level states (menu, playing, paused, game over, victory) around the
 // simulation in game.js. It also routes the ?shot= staging hook the screenshots use.
 //
-// ?seed=N fixes the random seed for a repeatable run. ?shot=start|play|late|end
+// ?seed=N fixes the random seed for a repeatable run. ?shot=start|cover|burst|play|late|end
 // (with &seed=N) stages that scene instead of running the loop, paints it and sets
 // window.__shotReady for the screenshot tool.
 
